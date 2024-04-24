@@ -3,6 +3,7 @@ const cors = require("cors")
 const app = express();
 const db = require('./models/index');
 const dotenv = require("dotenv");
+const path = require("path");
 
 
 
@@ -22,6 +23,8 @@ var corsOption = {
   app.use(cors(corsOption));
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use('/api/v1/Images', express.static(path.join(__dirname, 'Images')));
 dotenv.config({ path: "./config.env" });
 
 app.get("/",(req,res)=>{

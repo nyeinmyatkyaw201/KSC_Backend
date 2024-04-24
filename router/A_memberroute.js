@@ -6,7 +6,7 @@ module.exports = (app) => {
 
     router.post("/",AmemberCtrl.Amember);
 
-    router.post("/recmember_of_upload",AmemberCtrl.upload,AmemberCtrl.uploadAmember);
+    router.post("/recmember_of_upload/:id",AmemberCtrl.upload,AmemberCtrl.uploadAmember);
 
     app.use("/api/v1/A_member",router);
 

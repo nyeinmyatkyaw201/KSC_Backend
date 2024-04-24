@@ -1,125 +1,129 @@
 const db = require("../models/index");
-const Amemberrec = db.Amember;
+const newMember = db.newmember;
 const Upload = db.TblPath;
-const { sequelize } = require("../models")
+const { sequelize } = require("../models");
 const multer = require("multer");
 
 // Multer disk storage configuration
 const diskStorage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'images'); // Destination folder for storing uploaded images
-    },
-    filename: (req, file, cb) => {
-        const fileExtension = file.originalname.split('.').pop(); // Extract file extension
-        const fileNameWithoutExtension = file.originalname.replace(/\.[^/.]+$/, ''); // Remove existing file extension from filename
-        const fileName = fileNameWithoutExtension + '-' + Date.now() + '.' + fileExtension; // Append timestamp and file extension
-        cb(null, fileName);
-    }
+  destination: (req, file, cb) => {
+    cb(null, "images"); // Destination folder for storing uploaded images
+  },
+  filename: (req, file, cb) => {
+    const fileExtension = file.originalname.split(".").pop(); // Extract file extension
+    const fileNameWithoutExtension = file.originalname.replace(/\.[^/.]+$/, ""); // Remove existing file extension from filename
+    const fileName =
+      fileNameWithoutExtension + "-" + Date.now() + "." + fileExtension; // Append timestamp and file extension
+    cb(null, fileName);
+  },
 });
 
 // Multer file filter configuration
 const fileFilter = (req, file, cb) => {
-    const allowedMimeTypes = ["image/png", "image/jpeg", "image/jpg"];
-    allowedMimeTypes.includes(file.mimetype) ? cb(null, true) : cb(new Error('Invalid file type'), false);
-}
+  const allowedMimeTypes = ["image/png", "image/jpeg", "image/jpg"];
+  allowedMimeTypes.includes(file.mimetype)
+    ? cb(null, true)
+    : cb(new Error("Invalid file type"), false);
+};
 
 // Multer middleware configuration
 exports.upload = multer({
-    storage: diskStorage,
-    fileFilter: fileFilter
-}).array('t1', 10); // Allow multiple file uploads with field name "t1"
+  storage: diskStorage,
+  fileFilter: fileFilter,
+}).array("t1", 10); // Allow multiple file uploads with field name "t1"
 
 //<<------------------------------------------------------------------------------------->>
 exports.uploadAmember = async (req, res) => {
-    try {
-        // Extract data from the request body
-        const {
-            Recommendation_A_Member1_Number,
-            Recommendation_A_Member1_Name,
-            Recommendation_A_Member2_Number,
-            Recommendation_A_Member2_Name,
-        } = req.body;
+  try {
+    // Extract data from the request body
 
-        // Ensure Image is an array before proceeding
-        // if (!Array.isArray(Image)) {
-        //     return res.status(400).json({
-        //         status: "Fail",
-        //         message: "Images must be provided as an array"
-        //     });
-        // }
+    // Ensure Image is an array before proceeding
+    // if (!Array.isArray(Image)) {
+    //     return res.status(400).json({
+    //         status: "Fail",
+    //         message: "Images must be provided as an array"
+    //     });
+    // }
 
-        // Create a new member
-        const newMember = await db.Amember.create({
-            Recommendation_A_Member1_Number,
-            Recommendation_A_Member1_Name,
-            Recommendation_A_Member2_Number,
-            Recommendation_A_Member2_Name
-        });
+    // Create a new member
+    const id = req.params.id;
+    const newMember = await db.newmember.create({
+      parentid: id,
+      t22: req.body.Recommendation_A_Member1_Number,
+      t23: req.body.Recommendation_A_Member1_Name,
+      t24: req.body.Recommendation_A_Member2_Number,
+      t25: req.body.Recommendation_A_Member2_Name,
+    });
 
-        // Handle image uploads
-        const uploadPromises = [];
-        const files = req.files;
-        // Process each image upload
-        for (const file of files) {
-            // Extract data from the image object
-            const t1 = "http://localhost:3000/api/v1/Images" + file.filename;
-            const t2 = file.filename;
+    // Handle image uploads
+    const uploadPromises = [];
+    const files = req.files;
+    // Process each image upload
+    for (const file of files) {
+      // Extract data from the image object
+      const t1 = "http://localhost:3000/api/v1/Images" + file.filename;
+      const t2 = file.filename;
 
-            // Process each image upload and save to database
-            const uploadPromise = db.TblPath.create({
-                ID:newMember.ID,
-                Recommendation_A_Member1_Number: newMember.Recommendation_A_Member1_Number,
-                Recommendation_A_Member1_Name: newMember.Recommendation_A_Member1_Name,
-                Recommendation_A_Member2_Number: newMember.Recommendation_A_Member2_Number,
-                Recommendation_A_Member2_Name: newMember.Recommendation_A_Member2_Name,
-                t1,
-                t2
-            });
+      // Process each image upload and save to database
+      const uploadPromise = db.TblPath.create({
+        ID: id,
+        Recommendation_A_Member1_Number:
+          newMember.Recommendation_A_Member1_Number,
+        Recommendation_A_Member1_Name: newMember.Recommendation_A_Member1_Name,
+        Recommendation_A_Member2_Number:
+          newMember.Recommendation_A_Member2_Number,
+        Recommendation_A_Member2_Name: newMember.Recommendation_A_Member2_Name,
+        t1,
+        t2,
+      });
 
-            uploadPromises.push(uploadPromise);
-        }
-
-        // Wait for all image uploads to complete
-        await Promise.all(uploadPromises);
-
-        // Respond with success message
-        return res.status(201).json({
-            status: "Success",
-            message: "Member created and images uploaded successfully",
-            data: newMember
-        });
-    } catch (error) {
-        // If an error occurs during member creation or image upload, handle it and respond with an error message
-        console.error("Error occurred during member creation or image upload:", error);
-        return res.status(500).json({
-            status: "Fail",
-            message: "Error occurred during member creation or image upload",
-            error: error.message // You can choose to include the error message for debugging purposes
-        });
+      uploadPromises.push(uploadPromise);
     }
+
+    // Wait for all image uploads to complete
+    await Promise.all(uploadPromises);
+
+    // Respond with success message
+    return res.status(201).json({
+      status: "Success",
+      message: "Member created and images uploaded successfully",
+      data: newMember,
+    });
+  } catch (error) {
+    // If an error occurs during member creation or image upload, handle it and respond with an error message
+    console.error(
+      "Error occurred during member creation or image upload:",
+      error
+    );
+    return res.status(500).json({
+      status: "Fail",
+      message: "Error occurred during member creation or image upload",
+      error: error.message, // You can choose to include the error message for debugging purposes
+    });
+  }
 };
 
-
-  exports.Amember = async(req,res) => {
-
-    const A_member = await Amemberrec.create({
-        Recommendation_A_Member1_Number:req.body.Recommendation_A_Member1_Number,
-        Recommendation_A_Member1_Name:req.body.Recommendation_A_Member1_Name,
-        Recommendation_A_Member2_Number:req.body.Recommendation_A_Member2_Number,
-        Recommendation_A_Member2_Name:req.body.Recommendation_A_Member2_Name
-    }).then((data) => {
-        res.status(201).send({
-            status: "Success",
-            message: "Created Successfully",
-            data:data
-        })
-    }).catch((err) => {
-        res.status(401).send({
-            status: "Fail",
-            message: err.message,
-        })
+exports.Amember = async (req, res) => {
+  const A_member = await Amemberrec.create({
+    Recommendation_A_Member1_Number: req.body.Recommendation_A_Member1_Number,
+    Recommendation_A_Member1_Name: req.body.Recommendation_A_Member1_Name,
+    Recommendation_A_Member2_Number: req.body.Recommendation_A_Member2_Number,
+    Recommendation_A_Member2_Name: req.body.Recommendation_A_Member2_Name,
+  })
+    .then((data) => {
+      res.status(201).send({
+        status: "Success",
+        message: "Created Successfully",
+        data: data,
+      });
     })
-}
+    .catch((err) => {
+      res.status(401).send({
+        status: "Fail",
+        message: err.message,
+      });
+    });
+};
 
 // exports.CreateEmployeeAndUpload = async (req, res) => {
 //     try {
@@ -197,6 +201,3 @@ exports.uploadAmember = async (req, res) => {
 //         });
 //     }
 // };
-
-
-  

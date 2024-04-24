@@ -50,6 +50,7 @@ exports.upload = async (req, res) => {
           }
 
           const { Recommendation_A_Member1_Number, Recommendation_A_Member1_Name, Recommendation_A_Member2_Number, Recommendation_A_Member2_Name } = req.body;
+          
 
           const uploadRecords = [];
 
@@ -68,6 +69,7 @@ exports.upload = async (req, res) => {
                   t2
               });
               uploadRecords.push(uploadRecord);
+              console.log(uploadRecords,">>>>>>>>>>>>")
           }
 
           res.status(200).json({ message: 'Files uploaded successfully', data: uploadRecords });
