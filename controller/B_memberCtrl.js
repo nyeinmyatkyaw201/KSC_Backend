@@ -33,6 +33,24 @@ exports.Bmember_Create = async (req, res) => {
 
 exports.createBmemberbulk = catchAsync(async (req, res, next) => {
   try {
+    const id = req.params.id;
+    const existmember = await Bmember.findAll({ where: { parentid: id } });
+    console.log(existmember);
+    if (existmember && existmember.length > 0) {
+      const num = await Bmember.destroy({
+        where: { parentid: id },
+      });
+      console.log(num);
+      if (num > 0) {
+        res.send({
+          message: "Bmember was deleted successfully!",
+        });
+      } else {
+        res.status(404).send({
+          message: `Cannot delete stock with id=${id}. Maybe stock was not found!`,
+        });
+      }
+    }
     const data = req.body;
     const bulkdata = data.map((data) => ({
       parentid: data.parentid,
@@ -61,6 +79,7 @@ exports.BmembergetAndDelete = catchAsync(async (req, res, next) => {
   const id = req.params.id;
   try {
     const existmember = await Bmember.findAll({ where: { parentid: id } });
+    console.log(existmember);
     if (existmember && existmember.length > 0) {
       const num = await Bmember.destroy({
         where: { parentid: id },
@@ -82,38 +101,19 @@ exports.BmembergetAndDelete = catchAsync(async (req, res, next) => {
 });
 
 
-
-// exports.getBmember = (req, res) => {
-//   const title = req.query.id;
-//   var condition = title ? { title: { [Op.iLike]: `%${title}%` } } : null;
-
-//   Bmember.findAll({ where: condition })
-//     .then((data) => {
-//       res.status(200).send({
-//         status: "Success",
-//         message: "Retrieved all users.",
-//         data: data,
-//       });
-//     })
-//     .catch((err) => {
-//       res.status(500).send({
-//         message: err.message || "Some error occurred while retrieving users.",
-//       });
-//     });
-// };
-exports.getBmember= catchAsync(async(req,res,next)=>{
+exports.getBmember = catchAsync(async (req, res, next) => {
   const id = req.params.id;
-  try{
+  try {
     const data = await Bmember.findAll({ where: { parentid: id } });
     res.status(200).json({
-      status: 'success',
+      status: "success",
       message: "get b member successfully",
-      data
-    })
-  }catch(err){
+      data,
+    });
+  } catch (err) {
     res.status(500).json({
       status: "fail",
-      message: "something went wrong"
-    })
+      message: "something went wrong",
+    });
   }
-})
+});

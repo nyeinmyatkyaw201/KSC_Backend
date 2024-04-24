@@ -6,7 +6,7 @@ module.exports = (app) => {
 
     router.post("/",UploadCtrl.upload);
 
-    router.get("/getallfile",UploadCtrl.getAllFiles);
+    router.get("/getallfile/:id",UploadCtrl.getAllFiles);
 
     router.delete("/deletephoto/:id",UploadCtrl.deletePhoto);
 

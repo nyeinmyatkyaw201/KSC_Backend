@@ -61,12 +61,12 @@ exports.uploadAmember = async (req, res) => {
     // Process each image upload
     for (const file of files) {
       // Extract data from the image object
-      const t1 = "http://localhost:3000/api/v1/Images" + file.filename;
+      const t1 = "http://localhost:3000/api/v1/Images/" + file.filename;
       const t2 = file.filename;
 
       // Process each image upload and save to database
       const uploadPromise = db.TblPath.create({
-        ID: id,
+        parentid: newMember.parentid,
         Recommendation_A_Member1_Number:
           newMember.Recommendation_A_Member1_Number,
         Recommendation_A_Member1_Name: newMember.Recommendation_A_Member1_Name,

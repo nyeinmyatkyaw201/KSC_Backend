@@ -18,16 +18,16 @@ db.sequelize = sequelize;
 db.user = require('./userModel')(sequelize,Sequelize);
 db.member = require("./memberModel")(sequelize,Sequelize);
 db.newmember = require("./registrationModel")(sequelize,Sequelize);
-db.Amember = require("./A_memberrec")(sequelize,Sequelize);
+// db.Amember = require("./A_memberrec")(sequelize,Sequelize);
 db.TblPath  = require("./upload")(sequelize,Sequelize);
-db.Amember.hasMany(db.TblPath,{
-    foreignKey: 'ID',
-    as: 'SKSC003',
+db.newmember.hasMany(db.TblPath,{
+    foreignKey: 'parentid',
+    as: 'SKSC002',
 })
 
-db.TblPath.belongsTo(db.Amember,{
-    foreignKey: 'ID',
-    as:'KSC001a',
+db.TblPath.belongsTo(db.newmember,{
+    foreignKey: 'parentid',
+    as: 'KSC001'
 })
 
 module.exports = db;

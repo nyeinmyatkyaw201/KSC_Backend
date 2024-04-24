@@ -1,5 +1,6 @@
 // Import required modules
 // Import required modules
+const { where } = require("sequelize");
 const db = require("../models/index.js");
 const Upload = db.TblPath;
 const multer = require("multer");
@@ -88,7 +89,8 @@ exports.upload = async (req, res) => {
 // Retrieve all uploaded files
 exports.getAllFiles = async (req, res) => {
   try {
-    const uploads = await Upload.findAll(); // Fetch all uploaded records from the database
+    const id = req.params.id
+    const uploads = await Upload.findAll({where : {parentid : id}}); // Fetch all uploaded records from the database
 
     // Map uploads to extract filePaths and fileNames
     const fileData = uploads.map(upload => ({
