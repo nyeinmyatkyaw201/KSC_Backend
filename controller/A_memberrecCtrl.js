@@ -3,11 +3,57 @@ const newMember = db.newmember;
 const Upload = db.TblPath;
 const { sequelize } = require("../models");
 const multer = require("multer");
+const catchAsync = require("../utils/catchAsync");
+const transliteration = require("transliteration");
+const path = require("path");
+const fs = require("fs");
 
 // Multer disk storage configuration
+let pathName = "";
+let pathDate = "";
+
+exports.getName = catchAsync(async (req, res, next) => {
+  const id = req.params.id;
+  console.log(id, ">>>>>>");
+  try {
+    const registrationName = await newMember.findOne({ where: { id: id } });
+
+    pathName = `${registrationName.t2}`;
+    pathDate = `${registrationName.t8}`;
+    
+    const folderPath = path.join(
+      "D:",
+      "Learning",
+      "NodeJS",
+      "KSC_project",
+      "images",
+      `${pathName}`,
+      `${pathDate}`
+    );
+    console.log(folderPath, "Folder Path>>>>>>>>>>>>>>");
+    if (!fs.existsSync(folderPath)) {
+      // If it doesn't exist, create it
+      fs.mkdirSync(folderPath);
+      console.log("Folder created successfully.");
+    } else {
+      console.log("Folder already exists.");
+    }
+    res.status(200).json({
+      status: "success",
+      registrationName,
+    });
+  } catch (err) {
+    res.status(200).json({
+      status: "fail",
+      message: err,
+    });
+  }
+});
+
 const diskStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "images"); // Destination folder for storing uploaded images
+    console.log(pathName, "??????????");
+    cb(null, `images/${pathName}/${pathDate}`); // Destination folder for storing uploaded images
   },
   filename: (req, file, cb) => {
     const fileExtension = file.originalname.split(".").pop(); // Extract file extension
@@ -33,20 +79,37 @@ exports.upload = multer({
 }).array("t1", 10); // Allow multiple file uploads with field name "t1"
 
 //<<------------------------------------------------------------------------------------->>
+let myUpdateId = 0;
+let upDatedParentid = 0;
+let registrationName = "";
 exports.uploadAmember = async (req, res) => {
   try {
-    // Extract data from the request body
-
-    // Ensure Image is an array before proceeding
-    // if (!Array.isArray(Image)) {
-    //     return res.status(400).json({
-    //         status: "Fail",
-    //         message: "Images must be provided as an array"
-    //     });
-    // }
-
-    // Create a new member
     const id = req.params.id;
+
+    if (myUpdateId != 0 && upDatedParentid == id) {
+      const existmember = await db.newmember.findAll({
+        where: { id: myUpdateId },
+      });
+      console.log(existmember);
+      if (existmember && existmember.length > 0) {
+        const num = await db.newmember.destroy({
+          where: { id: myUpdateId },
+        });
+        console.log(num);
+        if (num > 0) {
+          myUpdateId = 0;
+          res.send({
+            message: "  deleted successfully!",
+          });
+        } else {
+          res.status(404).send({
+            message: `Cannot delete stock with id=${id}. Maybe  not found!`,
+          });
+        }
+      }
+      myUpdateId = 0;
+    }
+
     const newMember = await db.newmember.create({
       parentid: id,
       t22: req.body.Recommendation_A_Member1_Number,
@@ -54,6 +117,9 @@ exports.uploadAmember = async (req, res) => {
       t24: req.body.Recommendation_A_Member2_Number,
       t25: req.body.Recommendation_A_Member2_Name,
     });
+    myUpdateId = newMember.id;
+    upDatedParentid = newMember.parentid;
+    registrationName = newMember.t23;
 
     // Handle image uploads
     const uploadPromises = [];
@@ -61,7 +127,10 @@ exports.uploadAmember = async (req, res) => {
     // Process each image upload
     for (const file of files) {
       // Extract data from the image object
-      const t1 = "http://localhost:3000/api/v1/Images/" + file.filename;
+      const t1 =
+        `http://localhost:3000/api/v1/Images/${pathName}/${pathDate}` +
+        file.filename;
+      console.log(t1);
       const t2 = file.filename;
 
       // Process each image upload and save to database
@@ -124,80 +193,35 @@ exports.Amember = async (req, res) => {
       });
     });
 };
+exports.update = catchAsync(async (req, res, next) => {
+  const id = req.params.id;
+  try {
+    const num = await db.newmember.update(
+      {
+        t22: req.body.Recommendation_A_Member1_Number,
+        t23: req.body.Recommendation_A_Member1_Name,
+        t24: req.body.Recommendation_A_Member2_Number,
+        t25: req.body.Recommendation_A_Member2_Name,
+      },
+      {
+        where: { id: id },
+      }
+    );
 
-// exports.CreateEmployeeAndUpload = async (req, res) => {
-//     try {
-//         const {
-//             Recommendation_A_Member1_Number,
-//             Recommendation_A_Member1_Name,
-//             Recommendation_A_Member2_Number,
-//             Recommendation_A_Member2_Name
-//         } = req.body;
+    if (num == 1) {
+      res.status(200).json({
+        message: "member was updated successfully!",
+      });
+    } else {
+      return res.status(404).json({
+        error: `Cannot update member with id-${id}. Maybe Stock was not found!`,
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+});
 
-//         // Check if any of the recommendation member fields are undefined, if so, assign them empty strings
-//         const recMember1Number = Recommendation_A_Member1_Number || "";
-//         const recMember1Name = Recommendation_A_Member1_Name || "";
-//         const recMember2Number = Recommendation_A_Member2_Number || "";
-//         const recMember2Name = Recommendation_A_Member2_Name || "";
 
-//         const transaction = await sequelize.transaction();
-//         try {
-//             const newEmployee = await Amemberrec.create({
-//                 Recommendation_A_Member1_Number: recMember1Number,
-//                 Recommendation_A_Member1_Name: recMember1Name,
-//                 Recommendation_A_Member2_Number: recMember2Number,
-//                 Recommendation_A_Member2_Name: recMember2Name
-//             }, { transaction });
-
-//             // Handle file upload
-//             upload(req, res, async function (err) {
-//                 if (err instanceof multer.MulterError) {
-//                     await transaction.rollback();
-//                     console.error('Multer error:', err);
-//                     return res.status(400).json({ message: 'Multer error', error: err.message });
-//                 } else if (err) {
-//                     await transaction.rollback();
-//                     console.error('Upload error:', err);
-//                     return res.status(500).json({ message: 'Upload error', error: err });
-//                 }
-
-//                 if (!req.files || req.files.length === 0) {
-//                     await transaction.rollback();
-//                     return res.status(400).json({ message: 'No files uploaded' });
-//                 }
-
-//                 // Save uploaded files to the database
-//                 const uploadRecords = [];
-//                 for (const file of req.files) {
-//                     const t1 = 'http://localhost:3000/api/v1/images/' + file.filename;
-//                     const t2 = file.filename;
-//                     const uploadRecord = await Upload.create({
-//                         Recommendation_A_Member1_Number: recMember1Number,
-//                         Recommendation_A_Member1_Name: recMember1Name,
-//                         Recommendation_A_Member2_Number: recMember2Number,
-//                         Recommendation_A_Member2_Name: recMember2Name,
-//                         t1,
-//                         t2
-//                     }, { transaction });
-//                     uploadRecords.push(uploadRecord);
-//                 }
-//                 await transaction.commit();
-//                 return res.status(201).json({ message: 'Employee and files uploaded successfully', data: uploadRecords });
-//             });
-
-//         } catch (error) {
-//             await transaction.rollback();
-//             console.error(error);
-//             return res.status(500).json({
-//                 status: "Fail",
-//                 message: "Error occurred during Employee and file upload"
-//             });
-//         }
-//     } catch (error) {
-//         console.error(error);
-//         return res.status(500).json({
-//             status: "Fail",
-//             message: "Internal server error"
-//         });
-//     }
-// };

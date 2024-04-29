@@ -1,6 +1,11 @@
 const catchAsync = require("../utils/catchAsync");
+
 const db = require("../models/index");
+
 const Newmember = db.newmember;
+
+
+
 exports.registration = catchAsync(async (req, res, next) => {
   console.log(req.body);
   try {
@@ -14,6 +19,7 @@ exports.registration = catchAsync(async (req, res, next) => {
         message: "already exist this member",
       });
     }
+    
     const newmember = await Newmember.create({
       parentid: req.body.parentid,
       t2: req.body.name,
@@ -35,6 +41,8 @@ exports.registration = catchAsync(async (req, res, next) => {
       t21: req.body.racereligion,
       n6: req.body.status,
     });
+  
+  
     res.status(200).json({
       status: "success",
       message: "newmember has been added successfully",
@@ -47,6 +55,10 @@ exports.registration = catchAsync(async (req, res, next) => {
     });
   }
 });
+
+
+// Export the registration function
+
 
 exports.update = catchAsync(async (req, res, next) => {
   try {
