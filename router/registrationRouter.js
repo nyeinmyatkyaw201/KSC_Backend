@@ -7,6 +7,7 @@ module.exports = (app)=>{
     Router.route('/registrationmember').post( registrationCtrl.registration);
     Router.route('/registrationmember/:id').patch(registrationCtrl.update);
     Router.route('/registrationmember/BmemberGet/:id').delete(b_memberCtrl.BmembergetAndDelete);
+    Router.route('/').get(registrationCtrl.findallMember)
 
     
     app.use('/api/v1/user',Router)

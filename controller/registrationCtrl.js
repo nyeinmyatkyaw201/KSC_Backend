@@ -112,3 +112,17 @@ exports.update = catchAsync(async (req, res, next) => {
     });
   }
 });
+exports.findallMember = catchAsync(async (req,res,next)=>{
+  try{
+    const data = await Newmember.findAll();
+    res.status(200).json({
+      status : "success",
+      data : data
+    })
+  }catch(err){
+    res.status(400).json({
+      status : "fail",
+      message : "something went wrong"
+    })
+  }
+})
